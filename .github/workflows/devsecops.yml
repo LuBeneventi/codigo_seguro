@@ -19,11 +19,12 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Run Gitleaks Scanner
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        # SECURITY GATE: Si detecta secretos en el commit o repo -> BLOCK (Falla el job)
+      - name: Install and Run Gitleaks
+        run: |
+          curl -sSL https://github.com/gitleaks/gitleaks/releases/download/v8.24.3/gitleaks_8.24.3_linux_x64.tar.gz | tar -xz
+          sudo mv gitleaks /usr/local/bin/
+          gitleaks detect --source . -v --redact
+        # SECURITY GATE: Si detecta secretos en el repositorio -> BLOCK (exit code 1)
 
   # ============================================================================
   # ETAPA 2: BUILD & COMPILATION
@@ -73,7 +74,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Run Semgrep SAST
-        uses: returntocorp/semgrep-action@v1
+        uses: semgrep/semgrep-action@v1
         with:
           config: >-
             p/default
