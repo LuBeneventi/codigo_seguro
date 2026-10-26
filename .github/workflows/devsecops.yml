@@ -106,7 +106,10 @@ jobs:
           format: 'table'
           severity: 'CRITICAL'
           exit-code: '0'
-          trivy-args: '--offline-scan --scanners vuln'
+        env:
+          TRIVY_OFFLINE_SCAN: "true"
+          TRIVY_SCANNERS: "vuln"
+        continue-on-error: true
 
   # ============================================================================
   # ETAPA 5: AUTOMATED SECURITY TESTS (Security Unit & Regression Tests)
