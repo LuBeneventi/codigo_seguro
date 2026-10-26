@@ -9,20 +9,17 @@ services:
       context: ./ms-pedidos360-catalog
       dockerfile: Dockerfile
     container_name: pedidos360-catalog
-    ports:
-      # BASELINE-VULN [SEC-REQ-014]: puerto interno expuesto directamente
-      - "127.0.0.1:8086:8086"
     environment:
       - PORT=8086
-      - DB_HOST=${DB_HOST:-postgres-db}
+      - DB_HOST=${DB_HOST:-pedidos360_pg-db}
       - DB_PORT=${DB_PORT:-5432}
       - DB_NAME=pedidos360_catalog
-      - DB_USER=${DB_USER:-postgres}
-      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto predecibles en variables de entorno (postgres)
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_USER=${DB_USER:-pedidos360_pg}
+      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto predecibles en variables de entorno (pedidos360_pg)
+      - DB_PASSWORD=${DB_PASSWORD:-P3d1d0s360_Pg_S3cur3_P@ss_2026}
       - DB_SSLMODE=disable
     depends_on:
-      postgres-db:
+      pedidos360_pg-db:
         condition: service_started
     networks:
       - pedidos360-net
@@ -34,25 +31,22 @@ services:
       context: ./ms-pedidos360-orders
       dockerfile: Dockerfile
     container_name: pedidos360-orders
-    ports:
-      # BASELINE-VULN [SEC-REQ-014]: puerto interno expuesto directamente
-      - "127.0.0.1:8087:8087"
     environment:
       - PORT=8087
-      - DB_HOST=${DB_HOST:-postgres-db}
+      - DB_HOST=${DB_HOST:-pedidos360_pg-db}
       - DB_PORT=${DB_PORT:-5432}
       - DB_NAME=pedidos360_orders
-      - DB_USER=${DB_USER:-postgres}
-      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto predecibles en variables de entorno (postgres)
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_USER=${DB_USER:-pedidos360_pg}
+      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto predecibles en variables de entorno (pedidos360_pg)
+      - DB_PASSWORD=${DB_PASSWORD:-P3d1d0s360_Pg_S3cur3_P@ss_2026}
       - DB_SSLMODE=disable
       - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
       - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto de RabbitMQ (guest/guest)
-      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto de RabbitMQ (pedidos360_secure/pedidos360_secure)
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME:-pedidos360_admin}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-P3d1d0s360_Rbbt_S3cur3_P@ss_2026}
     depends_on:
-      postgres-db:
+      pedidos360_pg-db:
         condition: service_started
       rabbitmq:
         condition: service_healthy
@@ -69,9 +63,9 @@ services:
     environment:
       - RABBITMQ_HOST=${RABBITMQ_HOST:-rabbitmq}
       - RABBITMQ_PORT=${RABBITMQ_PORT:-5672}
-      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto de RabbitMQ (guest/guest)
-      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME:-guest}
-      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-guest}
+      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto de RabbitMQ (pedidos360_secure/pedidos360_secure)
+      - RABBITMQ_USERNAME=${RABBITMQ_USERNAME:-pedidos360_admin}
+      - RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD:-P3d1d0s360_Rbbt_S3cur3_P@ss_2026}
       - SMTP_HOST=${SMTP_HOST:-mailpit}
       - SMTP_PORT=${SMTP_PORT:-1025}
       - SMTP_USERNAME=
@@ -99,11 +93,11 @@ services:
       - "127.0.0.1:8088:8088"
     environment:
       - SECURITY_ENABLED=${SECURITY_ENABLED:-true}
-      # BASELINE-VULN [SEC-REQ-012]: secreto JWT por defecto debil (changeme)
-      - JWT_SECRET=${JWT_SECRET:-changeme}
-      - DB_HOST=${DB_HOST:-postgres-db}
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      # BASELINE-VULN [SEC-REQ-012]: secreto JWT por defecto debil (P3d1d0s360_S3cur3_Jwt_S3cr3t_K3y_2026_#XyZ)
+      - JWT_SECRET=${JWT_SECRET:-P3d1d0s360_S3cur3_Jwt_S3cr3t_K3y_2026_#XyZ}
+      - DB_HOST=${DB_HOST:-pedidos360_pg-db}
+      - DB_USER=${DB_USER:-pedidos360_pg}
+      - DB_PASSWORD=${DB_PASSWORD:-P3d1d0s360_Pg_S3cur3_P@ss_2026}
       - ORDERS_SERVICE_URL=http://ms-orders:8087
       - MICROSERVICE_BASE_URL=http://ms-orders:8087
       - CATALOG_SERVICE_URL=http://ms-catalog:8086
@@ -125,7 +119,7 @@ services:
         - VITE_API_URL=http://localhost:8088
     container_name: pedidos360-frontend
     ports:
-      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8080:8080"
     depends_on:
       - bff-api
     networks:
@@ -135,17 +129,14 @@ services:
   # ==============================================================
   # BASE DE DATOS POSTGRESQL (Para Catálogo y Órdenes)
   # ==============================================================
-  postgres-db:
+  pedidos360_pg-db:
     image: postgres:16-alpine
     container_name: pedidos360-db
-    ports:
-      # BASELINE-VULN [SEC-REQ-014]: puerto de base de datos expuesto externamente
-      - "127.0.0.1:5432:5432"
     environment:
-      - POSTGRES_USER=${DB_USER:-postgres}
-      # BASELINE-VULN [SEC-REQ-012]: clave de base de datos por defecto predecible (postgres)
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
-      - POSTGRES_DB=postgres
+      - POSTGRES_USER=${DB_USER:-pedidos360_pg}
+      # BASELINE-VULN [SEC-REQ-012]: clave de base de datos por defecto predecible (pedidos360_pg)
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-P3d1d0s360_Pg_S3cur3_P@ss_2026}
+      - POSTGRES_DB=pedidos360_pg
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
@@ -159,14 +150,10 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     container_name: pedidos360-rabbitmq
-    ports:
-      # BASELINE-VULN [SEC-REQ-014]: puerto del broker RabbitMQ expuesto externamente
-      - "127.0.0.1:5672:5672"
-      - "127.0.0.1:15672:15672"
     environment:
-      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto de RabbitMQ (guest/guest)
-      - RABBITMQ_DEFAULT_USER=guest
-      - RABBITMQ_DEFAULT_PASS=guest
+      # BASELINE-VULN [SEC-REQ-012]: credenciales por defecto de RabbitMQ (pedidos360_secure/pedidos360_secure)
+      - RABBITMQ_DEFAULT_USER=pedidos360_admin
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD:-P3d1d0s360_Rbbt_S3cur3_P@ss_2026}
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:

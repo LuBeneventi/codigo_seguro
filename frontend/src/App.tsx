@@ -349,10 +349,10 @@ export function App() {
                   products.map(p => (
                     <div key={p.id} className="product-card">
                       <div>
-                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado inseguro de nombre de producto con dangerouslySetInnerHTML */}
-                        <h3 dangerouslySetInnerHTML={{ __html: p.name }} />
-                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado inseguro de descripcion de producto con dangerouslySetInnerHTML */}
-                        <p dangerouslySetInnerHTML={{ __html: p.description || '' }} />
+                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado seguro de nombre de producto */}
+                        <h3>{p.name}</h3>
+                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado seguro de descripcion de producto */}
+                        <p>{p.description || ''}</p>
                         <div className="price">${p.price?.toLocaleString('es-CL')}</div>
                         <div style={{ fontSize: '0.85rem', color: '#666' }}>Stock disponible: {p.stock}</div>
                       </div>
@@ -468,8 +468,8 @@ export function App() {
                     <tr key={o.id}>
                       <td>#{o.id}</td>
                       <td>
-                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado inseguro de nombre de cliente con dangerouslySetInnerHTML */}
-                        <span dangerouslySetInnerHTML={{ __html: o.clienteNombre || '' }} />
+                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado seguro de nombre de cliente */}
+                        <span>{o.clienteNombre || ''}</span>
                       </td>
                       <td>${o.total?.toLocaleString('es-CL')}</td>
                       <td>
@@ -494,14 +494,14 @@ export function App() {
                 <h3>Detalle de Pedido #{selectedOrder.id}</h3>
                 <p>
                   <strong>Cliente: </strong>
-                  {/* BASELINE-VULN [SEC-REQ-009]: renderizado inseguro de nombre de cliente en detalle con dangerouslySetInnerHTML */}
-                  <span dangerouslySetInnerHTML={{ __html: selectedOrder.clienteNombre || '' }} />
+                  {/* BASELINE-VULN [SEC-REQ-009]: renderizado seguro de nombre de cliente en detalle */}
+                  <span>{selectedOrder.clienteNombre || ''}</span>
                 </p>
                 <p><strong>Correo: </strong>{selectedOrder.clienteEmail}</p>
                 <p>
                   <strong>Dirección: </strong>
-                  {/* BASELINE-VULN [SEC-REQ-009]: renderizado inseguro de direccion de cliente con dangerouslySetInnerHTML */}
-                  <span dangerouslySetInnerHTML={{ __html: selectedOrder.clienteDireccion || 'No registrada' }} />
+                  {/* BASELINE-VULN [SEC-REQ-009]: renderizado seguro de direccion de cliente */}
+                  <span>{selectedOrder.clienteDireccion || 'No registrada'}</span>
                 </p>
                 <p><strong>Total: </strong>${selectedOrder.total?.toLocaleString('es-CL')}</p>
                 <p><strong>Estado: </strong>{selectedOrder.estado}</p>
@@ -587,8 +587,8 @@ export function App() {
                     <tr key={o.id}>
                       <td>#{o.id}</td>
                       <td>
-                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado inseguro de nombre con dangerouslySetInnerHTML */}
-                        <span dangerouslySetInnerHTML={{ __html: o.clienteNombre || '' }} />
+                        {/* BASELINE-VULN [SEC-REQ-009]: renderizado seguro de nombre */}
+                        <span>{o.clienteNombre || ''}</span>
                       </td>
                       <td>${o.total?.toLocaleString('es-CL')}</td>
                       <td><span className="badge badge-pending">{o.estado}</span></td>

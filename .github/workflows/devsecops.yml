@@ -1,0 +1,152 @@
+name: DevSecOps Pipeline - Security Gates CI/CD
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  # ============================================================================
+  # ETAPA 1: SECRETS SCANNING (Shift-Left Temprano)
+  # ============================================================================
+  gitleaks:
+    name: Secrets Detection (Gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # SECURITY GATE: Si detecta secretos en el commit o repo -> BLOCK (Falla el job)
+
+  # ============================================================================
+  # ETAPA 2: BUILD & COMPILATION
+  # ============================================================================
+  build:
+    name: Build & Verify Modules
+    needs: gitleaks
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Compile Backend Modules
+        run: |
+          mvn -q -DskipTests compile -f api_cloud/pom.xml
+          mvn -q -DskipTests compile -f ms-pedidos360-catalog/pom.xml
+          mvn -q -DskipTests compile -f ms-pedidos360-orders/pom.xml
+          mvn -q -DskipTests compile -f ms-pedidos360-notify/pom.xml
+
+      - name: Set up Node.js for Frontend
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Build Frontend
+        working-directory: frontend
+        run: |
+          npm ci || npm install
+          npm run build
+
+  # ============================================================================
+  # ETAPA 3: SAST (Static Application Security Testing)
+  # ============================================================================
+  sast:
+    name: SAST Analysis (Semgrep)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Semgrep SAST
+        uses: returntocorp/semgrep-action@v1
+        with:
+          config: >-
+            p/default
+            p/owasp-top-ten
+            p/security-audit
+            p/secrets
+        env:
+          # SECURITY GATE: Hallazgos de severidad ERROR/CRITICAL bloquean el build
+          SEMGREP_RULES: >-
+            p/default
+            p/owasp-top-ten
+
+  # ============================================================================
+  # ETAPA 4: SCA (Software Composition Analysis)
+  # ============================================================================
+  sca:
+    name: Dependency Vulnerability Analysis (SCA)
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy Vulnerability Scanner (Repo & Deps)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          ignore-unfixed: true
+          format: 'table'
+          severity: 'CRITICAL,HIGH'
+          exit-code: '1' # SECURITY GATE: Falla si hay vulnerabilidades CRITICAL sin mitigar
+
+  # ============================================================================
+  # ETAPA 5: AUTOMATED SECURITY TESTS (Security Unit & Regression Tests)
+  # ============================================================================
+  security-tests:
+    name: Automated Security Regression Tests
+    needs: [sast, sca]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Execute Security Regression Test Suite
+        run: |
+          python run_automated_security_tests.py
+          # SECURITY GATE: Si alguno de los 16 tests falla, el script o la aserción bloquea el deploy
+          python -c "
+          import json, sys
+          with open('automated-security-test-results.json') as f:
+              data = json.load(f)
+          fails = [t for v in data.values() for t in v if t['status'] != 'PASS']
+          if fails:
+              print(f'SECURITY GATE ERROR: {len(fails)} security tests FAILED.')
+              sys.exit(1)
+          print('SECURITY GATE PASS: All 16 security tests PASSED.')
+          "
+
+  # ============================================================================
+  # ETAPA 6: DEPLOY / PACKAGE (Solo si todos los Security Gates son superados)
+  # ============================================================================
+  deploy:
+    name: Authorized Release & Deployment
+    needs: security-tests
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Deploy to Production Environment
+        run: |
+          echo "All Security Gates Passed: Secrets [OK], SAST [OK], SCA [OK], Tests [OK]."
+          echo "Deploying Pedidos360 Coffee Store..."
