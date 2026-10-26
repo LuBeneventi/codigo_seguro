@@ -35,7 +35,11 @@ public class SecurityConfig {
             .headers(headers -> headers
                 .frameOptions(f -> f.deny())
                 .contentTypeOptions(Customizer.withDefaults())
-                .contentSecurityPolicy(csp -> csp.policyDirectives("default-src 'self'; script-src 'self'; object-src 'none';"))
+                // Mitigacion SEC-REQ-014: CSP permite connect-src al BFF para que el frontend pueda hacer fetch
+                .contentSecurityPolicy(csp -> csp.policyDirectives(
+                    "default-src 'self'; script-src 'self'; object-src 'none'; " +
+                    "connect-src 'self' http://localhost:8088 http://127.0.0.1:8088;"
+                ))
             );
 
         if (!securityEnabled) {
@@ -74,7 +78,12 @@ public class SecurityConfig {
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
         // Mitigacion SEC-REQ-013: Restriccion estricta a origenes permitidos sin wildcard
-        config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000", "http://localhost:8080"));
+        config.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "http://localhost:3000",
+            "http://localhost:8080",
+            "http://127.0.0.1:8080"  // Soporte para acceso via 127.0.0.1 desde el frontend
+        ));
         config.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(List.of("Authorization", "Content-Type"));
         config.setAllowCredentials(true);
